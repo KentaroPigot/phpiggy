@@ -12,11 +12,15 @@ class Router
     public function add(string $method, string $path, array $controller)
     {
         $path = $this->normalizePath($path);
+
+        $regexPath = preg_replace('#{[^/]+}#', '([^/]+)', $path);
+
         $this->routes[] = [
             'path' => $path,
             'method' => strtoupper($method),
             'controller' => $controller,
-            'middlewares' => []
+            'middlewares' => [],
+            'regexPath' => $regexPath
         ];
     }
 
@@ -35,15 +39,23 @@ class Router
         $method = strtoupper($method);
 
         foreach ($this->routes as $route) {
-            if (!preg_match("#^{$route['path']}$#", $path) || $route['method'] !== $method) {
+            if (!preg_match("#^{$route['regexPath']}$#", $path, $paramValues) || $route['method'] !== $method) {
                 continue;
             }
+
+            array_shift($paramValues);  // $paramValues nous renvoie d'abord l'element entier correspondant à la correspondance. Ensuite les valeurs capturés
+
+            preg_match_all('#{([^/]+)}#', $route['path'], $paramKeys);  //Récupère la valeur présente entre {}. Le nom du paramètre.
+
+            $paramKeys = $paramKeys[1];     // preg_match_all nous renvoie une liste contenant d'abord une liste des elements complet qui correspond, puis ensuite une liste des noms des elements capturés.
+
+            $params = array_combine($paramKeys, $paramValues);
 
             [$class, $function] = $route['controller'];
 
             $controllerInstance = $container ? $container->resolve($class) : new $class;
 
-            $action = fn () => $controllerInstance->{$function}();
+            $action = fn () => $controllerInstance->{$function}($params);
 
             $allMiddleware = [...$route['middlewares'], ...$this->middlewares];    // On met bien nos 'global middlewares' après ceux specifique à une route. Il faut initialiser la session avant tout.
 

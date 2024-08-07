@@ -15,22 +15,28 @@ class AuthController
 
     public function registerView()
     {
+        $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
+
         echo $this->view->render("/register.php");
     }
 
     public function register()
     {
+
         $this->validatorService->validateRegister($_POST);
 
         $this->userService->isEmailTaken($_POST['email']);
 
         $this->userService->create($_POST);
 
+
         redirectTo('/');
     }
 
     public function loginView()
     {
+        $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
+
         echo $this->view->render("/login.php");
     }
 

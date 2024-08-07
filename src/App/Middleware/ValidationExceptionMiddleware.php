@@ -28,8 +28,11 @@ class ValidationExceptionMiddleware implements MiddlewareInterface
             $_SESSION["errors"] = $e->errors;
             $_SESSION["oldFormData"] = $formattedFormData;
 
-            $referer = $_SERVER["HTTP_REFERER"]; // C'est une valeur disponible après l'envoi d'un formulaire. il store l'url où le formulaire a été envoyé 
-            redirectTo($referer);
+            // $referer = $_SERVER["HTTP_REFERER"]; // C'est une valeur disponible après l'envoi d'un formulaire. il store l'url où le formulaire a été envoyé 
+            // redirectTo($referer);
+
+            $returnTo = $_SESSION['return_to'] ?? '/';
+            redirectTo($returnTo);
         }
     }
 }
